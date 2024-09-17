@@ -23,7 +23,7 @@ jobs:
 
       - name: Install Elm and tools
         run: |
-          npm intsall
+          npm install
 
       - name: Run Elm Format
         run: |
