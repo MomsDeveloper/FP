@@ -1,4 +1,4 @@
-module RbSetTree exposing (..)
+module RbSetTree exposing (Color(..), RBTree(..), Comparator, insert, blacken, redden, balance, delete, removeMin, rotate, toList, countNodes, colorsToList, search, filter, map, foldl, foldr, merge, calculateHeight)
 
 
 type Color
@@ -125,11 +125,12 @@ delete value compare tree =
                             rotate (Node c (aux a) y b)
 
                         EQ ->
-                            let
-                                ( minRight, newRight ) =
-                                    removeMin b
-                            in
-                            rotate (Node c a minRight newRight)
+                            case removeMin b of
+                                Just (minRight, newRight) ->
+                                    rotate (Node c a minRight newRight)
+
+                                Nothing ->
+                                    node
 
                         GT ->
                             rotate (Node c a y (aux b))
@@ -140,31 +141,31 @@ delete value compare tree =
     blacken (aux tree)
 
 
-removeMin : RBTree a -> ( a, RBTree a )
+removeMin : RBTree a -> Maybe (a, RBTree a)
 removeMin node =
     case node of
         Node Red Empty x Empty ->
-            ( x, Empty )
+            Just (x, Empty)
 
         Node Black Empty x Empty ->
-            ( x, DoubleEmpty )
+            Just (x, DoubleEmpty)
 
         Node Black Empty x (Node Red Empty y Empty) ->
-            ( x, Node Black Empty y Empty )
+            Just (x, Node Black Empty y Empty)
 
         Node c a x b ->
-            let
-                ( minLeft, newLeft ) =
-                    removeMin a
-            in
-            ( minLeft, rotate (Node c newLeft x b) )
+            case removeMin a of
+                Just (minLeft, newLeft) ->
+                    Just (minLeft, rotate (Node c newLeft x b))
+
+                _ ->
+                    Nothing
 
         Empty ->
-            Debug.todo "Empty tree"
+            Nothing
 
         DoubleEmpty ->
-            Debug.todo "DoubleEmpty tree"
-
+            Nothing
 
 rotate : RBTree a -> RBTree a
 rotate tree =
@@ -366,4 +367,4 @@ calculateHeight tree =
                 leftHeight + currentHeight
 
             else
-                Debug.todo "Tree is not balanced"
+                -1
