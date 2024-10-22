@@ -1,66 +1,66 @@
 module NumberLetterModule exposing (numberLetterModule)
 
-import Array
+import Array exposing (Array)
 
-numberToWords : Int -> String
+
+numberToWords : Int -> Int
 numberToWords n =
-    let
-        ones =
-            Array.fromList [ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" ]
-
-        teens =
-            Array.fromList [ "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" ]
-
-        tens =
-            Array.fromList [ "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety" ]
-
-        getOrEmpty index array =
-            Array.get index array |> Maybe.withDefault ""
-    in
-    if n == 0 then
-        ""
-
-    else if n < 10 then
-        getOrEmpty (n - 1) ones
-
-    else if n < 20 then
-        getOrEmpty (n - 10) teens
-
-    else if n < 100 then
-        let
-            tensDigit =
-                n // 10
-
-            onesDigit =
-                remainderBy 10 n
-        in
-        getOrEmpty (tensDigit - 2) tens
-            ++ (if onesDigit > 0 then
-                    numberToWords onesDigit
-
-                else
-                    ""
-               )
-
-    else if n < 1000 then
-        let
-            hundredsDigit =
-                n // 100
-
-            remainder =
-                remainderBy 100 n
-        in
-        if remainder == 0 then
-            getOrEmpty (hundredsDigit - 1) ones ++ "hundred"
-
-        else
-            getOrEmpty (hundredsDigit - 1) ones ++ "hundredand" ++ numberToWords remainder
+    if n > 1000 || n < 1 then
+        0
 
     else if n == 1000 then
-        "onethousand"
+        11
+
+    else if n < 20 then
+        ones n
+
+    else if n < 100 then
+        tens n
 
     else
-        ""
+        hundreds n
+
+
+ones : Int -> Int
+ones n =
+    let
+        len_ar_1_19 =
+            Array.fromList [ 0, 3, 3, 5, 4, 4, 3, 5, 5, 4, 3, 6, 6, 8, 8, 7, 7, 9, 8, 8 ]
+    in
+    getOrZero n len_ar_1_19
+
+
+tens : Int -> Int
+tens n =
+    let
+        len_ar_20_90 =
+            Array.fromList [ 0, 0, 6, 6, 5, 5, 5, 7, 6, 6 ]
+    in
+    getOrZero (n // 10) len_ar_20_90 + ones (remainderBy 10 n)
+
+
+hundreds : Int -> Int
+hundreds n =
+    let
+        hundredsDigit =
+            n // 100
+
+        remainder =
+            remainderBy 100 n
+    in
+    ones hundredsDigit
+        + 7
+        + (if remainder == 0 then
+            0
+
+           else
+            3 + numberToWords remainder
+          )
+
+
+getOrZero : Int -> Array Int -> Int
+getOrZero index array =
+    Array.get index array |> Maybe.withDefault 0
 
 
 numberSeq : Int -> List Int
@@ -69,7 +69,7 @@ numberSeq n =
         []
 
     else
-        String.length (numberToWords n) :: numberSeq (n - 1)
+        numberToWords n :: numberSeq (n - 1)
 
 
 numberLetterModule : Int -> Int
