@@ -5,12 +5,12 @@ type alias Point =
     , y : Float
     }
 
-linearInterpolation : Point -> Point -> Float -> Float
-linearInterpolation p1 p2 x =
+linearInterpolate : Point -> Point -> Float -> Float
+linearInterpolate p1 p2 x =
     p1.y + (p2.y - p1.y) * (x - p1.x) / (p2.x - p1.x)
 
-lagrangeInterpolation : List Point -> Float -> Float
-lagrangeInterpolation points x =
+lagrangeInterpolate : List Point -> Float -> Float
+lagrangeInterpolate points x =
     List.foldl
         (\p acc -> acc + p.y * (lagrangeBasis points x p.x))
         0
