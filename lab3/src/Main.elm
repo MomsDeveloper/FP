@@ -1,7 +1,6 @@
 port module Main exposing (..)
 
 import Browser
-import Color exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
@@ -23,7 +22,6 @@ type alias Model =
     , lagrangeInterpolatedPoints : Result String (List Point)
     , inputPoint : Point
     , interpolationType : InterpolationType
-    , previousX : Float
     , previousLinearPoint : Point
     , previousLagrangePoint : Point
     , debug : String
@@ -36,6 +34,7 @@ type Msg
     | AddPoint
     | ChangeInterpolationType InterpolationType
     | Draw Float
+    | Reset
 
 
 type alias Point =
@@ -87,9 +86,8 @@ init _ =
         , lagrangeInterpolatedPoints = Ok []
         , inputPoint = { x = 0, y = 0 }
         , interpolationType = Linear
-        , previousX = 0
-        , previousLinearPoint = { x = 0, y = 0 }
-        , previousLagrangePoint = { x = 0, y = 0 }
+        , previousLinearPoint = { x = -3.24, y = 0.8 }
+        , previousLagrangePoint = { x = -3.24, y = 0.8 }
         , debug = ""
         }
         Cmd.none
@@ -130,7 +128,9 @@ port draw : (Float -> msg) -> Sub msg
 port canvas : ( CanvasId, List CanvasAction ) -> Cmd msg
 
 
-port clearCanvas : CanvasId -> Cmd msg
+clearCanvas : CanvasId -> Cmd msg
+clearCanvas id =
+    canvas ( id, [ { action = "clear", args = [] } ] )
 
 
 subscriptions : Model -> Sub Msg
@@ -149,6 +149,19 @@ update msg model =
             model.inputPoint
     in
     case msg of
+        Reset ->
+            Tuple.pair
+                { points = []
+                , linearInterpolatedPoints = Ok []
+                , lagrangeInterpolatedPoints = Ok []
+                , inputPoint = { x = 0, y = 0 }
+                , interpolationType = model.interpolationType
+                , previousLinearPoint = { x = 0, y = 0 }
+                , previousLagrangePoint = { x = 0, y = 0 }
+                , debug = ""
+                }
+                (clearCanvas "plot")
+
         InputX x ->
             case String.toFloat x of
                 Just num ->
@@ -176,8 +189,8 @@ update msg model =
                         { model
                             | points = newPoints
                             , linearInterpolatedPoints = tryInterpolateLinearBatch newPoints
-                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint newPoints
-                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint newPoints
+                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
+                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
                         }
                         Cmd.none
 
@@ -186,8 +199,8 @@ update msg model =
                         { model
                             | points = newPoints
                             , lagrangeInterpolatedPoints = tryInterpolateLagrangeBatch newPoints
-                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint newPoints
-                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint newPoints
+                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
+                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
                         }
                         Cmd.none
 
@@ -197,8 +210,8 @@ update msg model =
                             | points = newPoints
                             , linearInterpolatedPoints = tryInterpolateLinearBatch newPoints
                             , lagrangeInterpolatedPoints = tryInterpolateLagrangeBatch newPoints
-                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint newPoints
-                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint newPoints
+                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
+                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
                         }
                         Cmd.none
 
@@ -247,18 +260,18 @@ update msg model =
                 case model.interpolationType of
                     Linear ->
                         Maybe.map (\p -> ( p, drawInterpolatedRange "red" model.previousLinearPoint p )) (getNextLinearInterpolatedPointToDraw nextX delta model.points)
-                            |> Maybe.map (\( p, cmd ) -> Tuple.pair { model | previousLinearPoint = p, previousLagrangePoint = p } cmd)
+                            |> Maybe.map (\( p, ass ) -> Tuple.pair { model | previousLinearPoint = p, previousLagrangePoint = p } (canvas ( "plot", ass )))
                             |> Maybe.withDefault (Tuple.pair model Cmd.none)
 
                     Lagrange ->
                         Maybe.map (\p -> ( p, drawInterpolatedRange "blue" model.previousLagrangePoint p )) (getNextLagrangeInterpolatedPointToDraw nextX delta model.points)
-                            |> Maybe.map (\( p, cmd ) -> Tuple.pair { model | previousLinearPoint = p, previousLagrangePoint = p } cmd)
+                            |> Maybe.map (\( p, ass ) -> Tuple.pair { model | previousLinearPoint = p, previousLagrangePoint = p } (canvas ( "plot", ass )))
                             |> Maybe.withDefault (Tuple.pair model Cmd.none)
 
                     LagrangeAndLinear ->
                         Maybe.map (\p -> ( p, drawInterpolatedRange "red" model.previousLinearPoint p )) (getNextLinearInterpolatedPointToDraw nextX delta model.points)
                             |> (Maybe.map (\p -> ( p, drawInterpolatedRange "blue" model.previousLagrangePoint p )) (getNextLagrangeInterpolatedPointToDraw nextX delta model.points)
-                                    |> Maybe.map2 (\( p1, cmd1 ) ( p2, cmd2 ) -> Tuple.pair { model | previousLinearPoint = p1, previousLagrangePoint = p2 } (Cmd.batch [ cmd1, cmd2 ]))
+                                    |> Maybe.map2 (\( p1, ass1 ) ( p2, ass2 ) -> Tuple.pair { model | previousLagrangePoint = p1, previousLinearPoint = p2 } (canvas ( "plot", ass1 ++ ass2 )))
                                )
                             |> Maybe.withDefault (Tuple.pair model Cmd.none)
 
@@ -294,18 +307,15 @@ getNextLagrangeInterpolatedPointToDraw x delta points =
             Nothing
 
 
-drawInterpolatedRange : String -> Point -> Point -> Cmd Msg
+drawInterpolatedRange : String -> Point -> Point -> List CanvasAction
 drawInterpolatedRange style previous current =
-    canvas
-        ( "plot"
-        , [ { action = "setStrokeStyle", args = [ style ] }
-          , { action = "beginPath", args = [] }
-          , { action = "moveTo", args = [ String.fromFloat (previous.x * scale), String.fromFloat (toFloat canvasSize - previous.y * scale) ] }
-          , { action = "lineTo", args = [ String.fromFloat (current.x * scale), String.fromFloat (toFloat canvasSize - current.y * scale) ] }
-          , { action = "stroke", args = [] }
-          , { action = "closePath", args = [] }
-          ]
-        )
+    [ { action = "setStrokeStyle", args = [ style ] }
+    , { action = "beginPath", args = [] }
+    , { action = "moveTo", args = [ String.fromFloat (toFloat canvasSize / 2 + previous.x * scale), String.fromFloat (toFloat canvasSize / 2 - previous.y * scale) ] }
+    , { action = "lineTo", args = [ String.fromFloat (toFloat canvasSize / 2 + current.x * scale), String.fromFloat (toFloat canvasSize / 2 - current.y * scale) ] }
+    , { action = "stroke", args = [] }
+    , { action = "closePath", args = [] }
+    ]
 
 
 setPreviousPoint : Point -> Point -> List Point -> Point
@@ -416,17 +426,21 @@ range start end step =
 view : Model -> Html Msg
 view model =
     div []
-        [ p [] [ Html.text "Ooga Debooga   " ]
+        [
+        -- p [] [ Html.text <| "previousLinearPoint: " ++ (viewFloat model.previousLinearPoint.x) ++ ", " ++ (viewFloat model.previousLinearPoint.y) ]
+        p[] [Html.canvas [ id "plot", width canvasSize, height canvasSize, style "border" "1px solid black" ] []]
         , input [ type_ "number", placeholder "X", onInput InputX ] []
         , input [ type_ "number", placeholder "Y", onInput InputY ] []
         , button [ onClick AddPoint ] [ Html.text "Add Point" ]
+        , button [ onClick Reset ] [ Html.text "Reset" ]
         , select [ onInput (stringToConfiguration >> ChangeInterpolationType) ]
             [ option [ value "Linear" ] [ Html.text "Linear" ]
             , option [ value "Lagrange" ] [ Html.text "Lagrange" ]
             , option [ value "LagrangeAndLinear" ] [ Html.text "Lagrange and Linear" ]
             ]
-        , Html.canvas [ id "plot", width canvasSize, height canvasSize, style "border" "1px solid black" ] []
+        , p [] [ Html.text "Points:" ]
         , ul [] (List.map (\point -> li [] [ Html.text (viewFloat point.x ++ ", " ++ viewFloat point.y) ]) <| List.reverse model.points)
+        , p [] [ Html.text "Interpolated Points:" ]
         , case model.linearInterpolatedPoints of
             Ok points ->
                 ul [] (List.map (\point -> li [] [ Html.text (viewFloat point.x ++ ", " ++ viewFloat point.y) ]) points)

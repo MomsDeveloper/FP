@@ -54,6 +54,9 @@
         ctx.setStrokeStyle = (color) => {
           ctx.strokeStyle = color;
         };
+        ctx.clear = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        };
 
         // Бу! Испугался? Не бойся, я друг, я тебя не обижу. 
         // Иди сюда, иди ко мне, сядь рядом со мной, посмотри мне в глаза. 

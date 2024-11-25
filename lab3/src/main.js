@@ -5193,9 +5193,8 @@ var $author$project$Main$init = function (_v0) {
 					{x: -0.88, y: 3.77},
 					{x: -3.24, y: 0.8}
 				]),
-			previousLagrangePoint: {x: 0, y: 0},
-			previousLinearPoint: {x: 0, y: 0},
-			previousX: 0
+			previousLagrangePoint: {x: -3.24, y: 0.8},
+			previousLinearPoint: {x: -3.24, y: 0.8}
 		},
 		$elm$core$Platform$Cmd$none);
 };
@@ -5209,8 +5208,6 @@ var $author$project$Main$subscriptions = function (_v0) {
 };
 var $author$project$Main$Lagrange = {$: 'Lagrange'};
 var $author$project$Main$LagrangeAndLinear = {$: 'LagrangeAndLinear'};
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Main$clearCanvas = _Platform_outgoingPort('clearCanvas', $elm$json$Json$Encode$string);
 var $elm$json$Json$Encode$list = F2(
 	function (func, entries) {
 		return _Json_wrap(
@@ -5233,6 +5230,7 @@ var $elm$json$Json$Encode$object = function (pairs) {
 			_Json_emptyObject(_Utils_Tuple0),
 			pairs));
 };
+var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$Main$canvas = _Platform_outgoingPort(
 	'canvas',
 	function ($) {
@@ -5259,41 +5257,47 @@ var $author$project$Main$canvas = _Platform_outgoingPort(
 					})(b)
 				]));
 	});
+var $author$project$Main$clearCanvas = function (id) {
+	return $author$project$Main$canvas(
+		_Utils_Tuple2(
+			id,
+			_List_fromArray(
+				[
+					{action: 'clear', args: _List_Nil}
+				])));
+};
 var $author$project$Main$canvasSize = 500;
 var $elm$core$String$fromFloat = _String_fromNumber;
 var $author$project$Main$scale = 10;
 var $author$project$Main$drawInterpolatedRange = F3(
 	function (style, previous, current) {
-		return $author$project$Main$canvas(
-			_Utils_Tuple2(
-				'plot',
-				_List_fromArray(
+		return _List_fromArray(
+			[
+				{
+				action: 'setStrokeStyle',
+				args: _List_fromArray(
+					[style])
+			},
+				{action: 'beginPath', args: _List_Nil},
+				{
+				action: 'moveTo',
+				args: _List_fromArray(
 					[
-						{
-						action: 'setStrokeStyle',
-						args: _List_fromArray(
-							[style])
-					},
-						{action: 'beginPath', args: _List_Nil},
-						{
-						action: 'moveTo',
-						args: _List_fromArray(
-							[
-								$elm$core$String$fromFloat(previous.x * $author$project$Main$scale),
-								$elm$core$String$fromFloat($author$project$Main$canvasSize - (previous.y * $author$project$Main$scale))
-							])
-					},
-						{
-						action: 'lineTo',
-						args: _List_fromArray(
-							[
-								$elm$core$String$fromFloat(current.x * $author$project$Main$scale),
-								$elm$core$String$fromFloat($author$project$Main$canvasSize - (current.y * $author$project$Main$scale))
-							])
-					},
-						{action: 'stroke', args: _List_Nil},
-						{action: 'closePath', args: _List_Nil}
-					])));
+						$elm$core$String$fromFloat(($author$project$Main$canvasSize / 2) + (previous.x * $author$project$Main$scale)),
+						$elm$core$String$fromFloat(($author$project$Main$canvasSize / 2) - (previous.y * $author$project$Main$scale))
+					])
+			},
+				{
+				action: 'lineTo',
+				args: _List_fromArray(
+					[
+						$elm$core$String$fromFloat(($author$project$Main$canvasSize / 2) + (current.x * $author$project$Main$scale)),
+						$elm$core$String$fromFloat(($author$project$Main$canvasSize / 2) - (current.y * $author$project$Main$scale))
+					])
+			},
+				{action: 'stroke', args: _List_Nil},
+				{action: 'closePath', args: _List_Nil}
+			]);
 	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
@@ -5666,6 +5670,20 @@ var $author$project$Main$update = F2(
 	function (msg, model) {
 		var inputPoint = model.inputPoint;
 		switch (msg.$) {
+			case 'Reset':
+				return A2(
+					$elm$core$Tuple$pair,
+					{
+						debug: '',
+						inputPoint: {x: 0, y: 0},
+						interpolationType: model.interpolationType,
+						lagrangeInterpolatedPoints: $elm$core$Result$Ok(_List_Nil),
+						linearInterpolatedPoints: $elm$core$Result$Ok(_List_Nil),
+						points: _List_Nil,
+						previousLagrangePoint: {x: 0, y: 0},
+						previousLinearPoint: {x: 0, y: 0}
+					},
+					$author$project$Main$clearCanvas('plot'));
 			case 'InputX':
 				var x = msg.a;
 				var _v1 = $elm$core$String$toFloat(x);
@@ -5714,8 +5732,8 @@ var $author$project$Main$update = F2(
 								{
 									linearInterpolatedPoints: $author$project$Main$tryInterpolateLinearBatch(newPoints),
 									points: newPoints,
-									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, newPoints),
-									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, newPoints)
+									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
+									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
 								}),
 							$elm$core$Platform$Cmd$none);
 					case 'Lagrange':
@@ -5726,8 +5744,8 @@ var $author$project$Main$update = F2(
 								{
 									lagrangeInterpolatedPoints: $author$project$Main$tryInterpolateLagrangeBatch(newPoints),
 									points: newPoints,
-									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, newPoints),
-									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, newPoints)
+									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
+									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
 								}),
 							$elm$core$Platform$Cmd$none);
 					default:
@@ -5739,8 +5757,8 @@ var $author$project$Main$update = F2(
 									lagrangeInterpolatedPoints: $author$project$Main$tryInterpolateLagrangeBatch(newPoints),
 									linearInterpolatedPoints: $author$project$Main$tryInterpolateLinearBatch(newPoints),
 									points: newPoints,
-									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, newPoints),
-									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, newPoints)
+									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
+									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
 								}),
 							$elm$core$Platform$Cmd$none);
 				}
@@ -5801,13 +5819,14 @@ var $author$project$Main$update = F2(
 									$elm$core$Maybe$map,
 									function (_v6) {
 										var p = _v6.a;
-										var cmd = _v6.b;
+										var ass = _v6.b;
 										return A2(
 											$elm$core$Tuple$pair,
 											_Utils_update(
 												model,
 												{previousLagrangePoint: p, previousLinearPoint: p}),
-											cmd);
+											$author$project$Main$canvas(
+												_Utils_Tuple2('plot', ass)));
 									},
 									A2(
 										$elm$core$Maybe$map,
@@ -5825,13 +5844,14 @@ var $author$project$Main$update = F2(
 									$elm$core$Maybe$map,
 									function (_v7) {
 										var p = _v7.a;
-										var cmd = _v7.b;
+										var ass = _v7.b;
 										return A2(
 											$elm$core$Tuple$pair,
 											_Utils_update(
 												model,
 												{previousLagrangePoint: p, previousLinearPoint: p}),
-											cmd);
+											$author$project$Main$canvas(
+												_Utils_Tuple2('plot', ass)));
 									},
 									A2(
 										$elm$core$Maybe$map,
@@ -5859,17 +5879,18 @@ var $author$project$Main$update = F2(
 										F2(
 											function (_v8, _v9) {
 												var p1 = _v8.a;
-												var cmd1 = _v8.b;
+												var ass1 = _v8.b;
 												var p2 = _v9.a;
-												var cmd2 = _v9.b;
+												var ass2 = _v9.b;
 												return A2(
 													$elm$core$Tuple$pair,
 													_Utils_update(
 														model,
-														{previousLagrangePoint: p2, previousLinearPoint: p1}),
-													$elm$core$Platform$Cmd$batch(
-														_List_fromArray(
-															[cmd1, cmd2])));
+														{previousLagrangePoint: p1, previousLinearPoint: p2}),
+													$author$project$Main$canvas(
+														_Utils_Tuple2(
+															'plot',
+															_Utils_ap(ass1, ass2))));
 											})),
 									A2(
 										$elm$core$Maybe$map,
@@ -5895,6 +5916,7 @@ var $author$project$Main$InputX = function (a) {
 var $author$project$Main$InputY = function (a) {
 	return {$: 'InputY', a: a};
 };
+var $author$project$Main$Reset = {$: 'Reset'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$canvas = _VirtualDom_node('canvas');
 var $elm$core$Basics$composeR = F3(
@@ -6014,7 +6036,16 @@ var $author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Ooga Debooga   ')
+						A2(
+						$elm$html$Html$canvas,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$id('plot'),
+								$elm$html$Html$Attributes$width($author$project$Main$canvasSize),
+								$elm$html$Html$Attributes$height($author$project$Main$canvasSize),
+								A2($elm$html$Html$Attributes$style, 'border', '1px solid black')
+							]),
+						_List_Nil)
 					])),
 				A2(
 				$elm$html$Html$input,
@@ -6043,6 +6074,16 @@ var $author$project$Main$view = function (model) {
 				_List_fromArray(
 					[
 						$elm$html$Html$text('Add Point')
+					])),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$Reset)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Reset')
 					])),
 				A2(
 				$elm$html$Html$select,
@@ -6085,15 +6126,12 @@ var $author$project$Main$view = function (model) {
 							]))
 					])),
 				A2(
-				$elm$html$Html$canvas,
+				$elm$html$Html$p,
+				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$id('plot'),
-						$elm$html$Html$Attributes$width($author$project$Main$canvasSize),
-						$elm$html$Html$Attributes$height($author$project$Main$canvasSize),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid black')
-					]),
-				_List_Nil),
+						$elm$html$Html$text('Points:')
+					])),
 				A2(
 				$elm$html$Html$ul,
 				_List_Nil,
@@ -6110,6 +6148,13 @@ var $author$project$Main$view = function (model) {
 								]));
 					},
 					$elm$core$List$reverse(model.points))),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Interpolated Points:')
+					])),
 				function () {
 				var _v0 = model.linearInterpolatedPoints;
 				if (_v0.$ === 'Ok') {
