@@ -1,0 +1,76 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Interpol</title>
+    <script src="main.js"></script>
+  </head>
+
+  <body>
+    <div id="myapp"></div>
+    <script>
+      let app = Elm.Main.init({
+        node: document.getElementById("myapp"),
+      });
+
+      let previousTimestamp = 0;
+      
+      let steps = 10000000;
+
+      function next(timestamp) {
+        if (steps-- === 0) {
+          console.log("done");
+          return;
+        }
+
+        const delta = timestamp - previousTimestamp;
+        previousTimestamp = timestamp;
+
+        // for (let i = 0; i < 100000; i++) {
+        //   console.log("busy");
+        // }
+
+        app.ports.draw.send(delta);
+
+        window.requestAnimationFrame(next);
+      }
+
+      window.requestAnimationFrame((timestamp) => {
+        previousTimestamp = timestamp;
+        next(timestamp);
+      });
+
+      app.ports.canvas.subscribe((msg) => {
+        const [canvasId, actions] = msg;
+        
+        /**
+         * @type {HTMLCanvasElement}
+         */
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext("2d");
+
+        ctx.setFillStyle = (color) => {
+          ctx.fillStyle = color;
+        };
+        ctx.setStrokeStyle = (color) => {
+          ctx.strokeStyle = color;
+        };
+
+        // Бу! Испугался? Не бойся, я друг, я тебя не обижу. 
+        // Иди сюда, иди ко мне, сядь рядом со мной, посмотри мне в глаза. 
+        // Ты видишь меня? Я тоже тебя вижу. Давай смотреть друг на друга до тех пор, пока наши глаза не устанут. 
+        // Ты не хочешь? Почему? Что-то не так?
+        for (const { action, args } of actions) {
+          console.log(action, args);
+          ctx[action](...args);
+        }
+      });
+
+      app.ports.clearCanvas.subscribe((canvasId) => {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      });
+
+    </script>
+  </body>
+</html>
