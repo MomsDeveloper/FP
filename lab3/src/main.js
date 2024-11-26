@@ -5685,7 +5685,7 @@ var $author$project$Main$update = F2(
 					$elm$core$Tuple$pair,
 					{
 						debug: '',
-						inputPoint: {x: 0, y: 0},
+						inputPoint: model.inputPoint,
 						interpolationType: model.interpolationType,
 						lagrangeInterpolatedPoints: $elm$core$Result$Ok(_List_Nil),
 						linearInterpolatedPoints: $elm$core$Result$Ok(_List_Nil),

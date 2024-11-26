@@ -154,7 +154,7 @@ update msg model =
                 { points = []
                 , linearInterpolatedPoints = Ok []
                 , lagrangeInterpolatedPoints = Ok []
-                , inputPoint = { x = 0, y = 0 }
+                , inputPoint = model.inputPoint
                 , interpolationType = model.interpolationType
                 , previousLinearPoint = { x = 0, y = 0 }
                 , previousLagrangePoint = { x = 0, y = 0 }
