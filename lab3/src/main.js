@@ -5176,6 +5176,7 @@ var $author$project$Main$init = function (_v0) {
 			debug: '',
 			inputPoint: {x: 0, y: 0},
 			interpolationType: $author$project$Main$Linear,
+			invalidInput: $elm$core$Maybe$Nothing,
 			lagrangeInterpolatedPoints: $elm$core$Result$Ok(_List_Nil),
 			linearInterpolatedPoints: $elm$core$Result$Ok(_List_Nil),
 			points: _List_fromArray(
@@ -5687,6 +5688,7 @@ var $author$project$Main$update = F2(
 						debug: '',
 						inputPoint: model.inputPoint,
 						interpolationType: model.interpolationType,
+						invalidInput: $elm$core$Maybe$Nothing,
 						lagrangeInterpolatedPoints: $elm$core$Result$Ok(_List_Nil),
 						linearInterpolatedPoints: $elm$core$Result$Ok(_List_Nil),
 						points: _List_Nil,
@@ -5699,14 +5701,22 @@ var $author$project$Main$update = F2(
 				var _v1 = $elm$core$String$toFloat(x);
 				if (_v1.$ === 'Just') {
 					var num = _v1.a;
-					return A2(
+					return A2($author$project$Main$checkPoint, num, model.points) ? A2(
+						$elm$core$Tuple$pair,
+						_Utils_update(
+							model,
+							{
+								invalidInput: $elm$core$Maybe$Just('Point X should be more than exists')
+							}),
+						$elm$core$Platform$Cmd$none) : A2(
 						$elm$core$Tuple$pair,
 						_Utils_update(
 							model,
 							{
 								inputPoint: _Utils_update(
 									inputPoint,
-									{x: num})
+									{x: num}),
+								invalidInput: $elm$core$Maybe$Nothing
 							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
@@ -5732,45 +5742,49 @@ var $author$project$Main$update = F2(
 				}
 			case 'AddPoint':
 				var newPoints = A2($author$project$Main$checkPoint, inputPoint.x, model.points) ? model.points : A2($elm$core$List$cons, inputPoint, model.points);
-				var _v3 = model.interpolationType;
-				switch (_v3.$) {
-					case 'Linear':
-						return A2(
-							$elm$core$Tuple$pair,
-							_Utils_update(
-								model,
-								{
-									linearInterpolatedPoints: $author$project$Main$tryInterpolateLinearBatch(newPoints),
-									points: newPoints,
-									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
-									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
-								}),
-							$elm$core$Platform$Cmd$none);
-					case 'Lagrange':
-						return A2(
-							$elm$core$Tuple$pair,
-							_Utils_update(
-								model,
-								{
-									lagrangeInterpolatedPoints: $author$project$Main$tryInterpolateLagrangeBatch(newPoints),
-									points: newPoints,
-									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
-									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
-								}),
-							$elm$core$Platform$Cmd$none);
-					default:
-						return A2(
-							$elm$core$Tuple$pair,
-							_Utils_update(
-								model,
-								{
-									lagrangeInterpolatedPoints: $author$project$Main$tryInterpolateLagrangeBatch(newPoints),
-									linearInterpolatedPoints: $author$project$Main$tryInterpolateLinearBatch(newPoints),
-									points: newPoints,
-									previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
-									previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
-								}),
-							$elm$core$Platform$Cmd$none);
+				if (_Utils_eq(model.invalidInput, $elm$core$Maybe$Nothing)) {
+					var _v3 = model.interpolationType;
+					switch (_v3.$) {
+						case 'Linear':
+							return A2(
+								$elm$core$Tuple$pair,
+								_Utils_update(
+									model,
+									{
+										linearInterpolatedPoints: $author$project$Main$tryInterpolateLinearBatch(newPoints),
+										points: newPoints,
+										previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
+										previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
+									}),
+								$elm$core$Platform$Cmd$none);
+						case 'Lagrange':
+							return A2(
+								$elm$core$Tuple$pair,
+								_Utils_update(
+									model,
+									{
+										lagrangeInterpolatedPoints: $author$project$Main$tryInterpolateLagrangeBatch(newPoints),
+										points: newPoints,
+										previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
+										previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
+									}),
+								$elm$core$Platform$Cmd$none);
+						default:
+							return A2(
+								$elm$core$Tuple$pair,
+								_Utils_update(
+									model,
+									{
+										lagrangeInterpolatedPoints: $author$project$Main$tryInterpolateLagrangeBatch(newPoints),
+										linearInterpolatedPoints: $author$project$Main$tryInterpolateLinearBatch(newPoints),
+										points: newPoints,
+										previousLagrangePoint: A3($author$project$Main$setPreviousPoint, model.previousLagrangePoint, inputPoint, model.points),
+										previousLinearPoint: A3($author$project$Main$setPreviousPoint, model.previousLinearPoint, inputPoint, model.points)
+									}),
+								$elm$core$Platform$Cmd$none);
+					}
+				} else {
+					return A2($elm$core$Tuple$pair, model, $elm$core$Platform$Cmd$none);
 				}
 			case 'ChangeInterpolationType':
 				var interpolationType = msg.a;
@@ -6135,6 +6149,24 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$text('Lagrange and Linear')
 							]))
 					])),
+				function () {
+				var _v0 = model.invalidInput;
+				if (_v0.$ === 'Just') {
+					var error = _v0.a;
+					return A2(
+						$elm$html$Html$li,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'color', 'red')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(error)
+							]));
+				} else {
+					return $elm$html$Html$text('');
+				}
+			}(),
 				A2(
 				$elm$html$Html$p,
 				_List_Nil,
@@ -6166,41 +6198,7 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$text('Interpolated Points:')
 					])),
 				function () {
-				var _v0 = model.linearInterpolatedPoints;
-				if (_v0.$ === 'Ok') {
-					var points = _v0.a;
-					return A2(
-						$elm$html$Html$ul,
-						_List_Nil,
-						A2(
-							$elm$core$List$map,
-							function (point) {
-								return A2(
-									$elm$html$Html$li,
-									_List_Nil,
-									_List_fromArray(
-										[
-											$elm$html$Html$text(
-											$author$project$Main$viewFloat(point.x) + (', ' + $author$project$Main$viewFloat(point.y)))
-										]));
-							},
-							points));
-				} else {
-					var error = _v0.a;
-					return A2(
-						$elm$html$Html$li,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'color', 'red')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text(error)
-							]));
-				}
-			}(),
-				function () {
-				var _v1 = model.lagrangeInterpolatedPoints;
+				var _v1 = model.linearInterpolatedPoints;
 				if (_v1.$ === 'Ok') {
 					var points = _v1.a;
 					return A2(
@@ -6221,6 +6219,40 @@ var $author$project$Main$view = function (model) {
 							points));
 				} else {
 					var error = _v1.a;
+					return A2(
+						$elm$html$Html$li,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'color', 'red')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(error)
+							]));
+				}
+			}(),
+				function () {
+				var _v2 = model.lagrangeInterpolatedPoints;
+				if (_v2.$ === 'Ok') {
+					var points = _v2.a;
+					return A2(
+						$elm$html$Html$ul,
+						_List_Nil,
+						A2(
+							$elm$core$List$map,
+							function (point) {
+								return A2(
+									$elm$html$Html$li,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text(
+											$author$project$Main$viewFloat(point.x) + (', ' + $author$project$Main$viewFloat(point.y)))
+										]));
+							},
+							points));
+				} else {
+					var error = _v2.a;
 					return A2(
 						$elm$html$Html$li,
 						_List_fromArray(

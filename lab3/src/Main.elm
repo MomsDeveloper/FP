@@ -24,6 +24,7 @@ type alias Model =
     , interpolationType : InterpolationType
     , previousLinearPoint : Point
     , previousLagrangePoint : Point
+    , invalidInput : Maybe String
     , debug : String
     }
 
@@ -88,6 +89,7 @@ init _ =
         , interpolationType = Linear
         , previousLinearPoint = { x = -3.24, y = 0.8 }
         , previousLagrangePoint = { x = -3.24, y = 0.8 }
+        , invalidInput = Nothing
         , debug = ""
         }
         Cmd.none
@@ -158,6 +160,7 @@ update msg model =
                 , interpolationType = model.interpolationType
                 , previousLinearPoint = { x = 0, y = 0 }
                 , previousLagrangePoint = { x = 0, y = 0 }
+                , invalidInput = Nothing
                 , debug = ""
                 }
                 (clearCanvas "plot")
@@ -165,8 +168,13 @@ update msg model =
         InputX x ->
             case String.toFloat x of
                 Just num ->
-                    Tuple.pair { model | inputPoint = { inputPoint | x = num } } Cmd.none
+                    if checkPoint num model.points then
+                        Tuple.pair { model | invalidInput = Just "Point X should be more than exists" } Cmd.none
 
+                    else
+                        Tuple.pair { model | inputPoint = { inputPoint | x = num }, invalidInput = Nothing } Cmd.none
+
+                -- Tuple.pair { model | inputPoint = { inputPoint | x = num } } Cmd.none
                 Nothing ->
                     Tuple.pair model Cmd.none
 
@@ -187,37 +195,41 @@ update msg model =
                     else
                         inputPoint :: model.points
             in
-            case model.interpolationType of
-                Linear ->
-                    Tuple.pair
-                        { model
-                            | points = newPoints
-                            , linearInterpolatedPoints = tryInterpolateLinearBatch newPoints
-                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
-                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
-                        }
-                        Cmd.none
+            if model.invalidInput == Nothing then
+                case model.interpolationType of
+                    Linear ->
+                        Tuple.pair
+                            { model
+                                | points = newPoints
+                                , linearInterpolatedPoints = tryInterpolateLinearBatch newPoints
+                                , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
+                                , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
+                            }
+                            Cmd.none
 
-                Lagrange ->
-                    Tuple.pair
-                        { model
-                            | points = newPoints
-                            , lagrangeInterpolatedPoints = tryInterpolateLagrangeBatch newPoints
-                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
-                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
-                        }
-                        Cmd.none
+                    Lagrange ->
+                        Tuple.pair
+                            { model
+                                | points = newPoints
+                                , lagrangeInterpolatedPoints = tryInterpolateLagrangeBatch newPoints
+                                , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
+                                , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
+                            }
+                            Cmd.none
 
-                LagrangeAndLinear ->
-                    Tuple.pair
-                        { model
-                            | points = newPoints
-                            , linearInterpolatedPoints = tryInterpolateLinearBatch newPoints
-                            , lagrangeInterpolatedPoints = tryInterpolateLagrangeBatch newPoints
-                            , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
-                            , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
-                        }
-                        Cmd.none
+                    LagrangeAndLinear ->
+                        Tuple.pair
+                            { model
+                                | points = newPoints
+                                , linearInterpolatedPoints = tryInterpolateLinearBatch newPoints
+                                , lagrangeInterpolatedPoints = tryInterpolateLagrangeBatch newPoints
+                                , previousLinearPoint = setPreviousPoint model.previousLinearPoint inputPoint model.points
+                                , previousLagrangePoint = setPreviousPoint model.previousLagrangePoint inputPoint model.points
+                            }
+                            Cmd.none
+
+            else
+                Tuple.pair model Cmd.none
 
         ChangeInterpolationType interpolationType ->
             case interpolationType of
@@ -450,6 +462,12 @@ view model =
             , option [ value "Lagrange" ] [ Html.text "Lagrange" ]
             , option [ value "LagrangeAndLinear" ] [ Html.text "Lagrange and Linear" ]
             ]
+        , case model.invalidInput of
+            Just error ->
+                li [ style "color" "red" ] [ Html.text error ]
+
+            Nothing ->
+                Html.text ""
         , p [] [ Html.text "Points:" ]
         , ul [] (List.map (\point -> li [] [ Html.text (viewFloat point.x ++ ", " ++ viewFloat point.y) ]) <| List.reverse model.points)
         , p [] [ Html.text "Interpolated Points:" ]
