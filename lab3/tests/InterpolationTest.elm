@@ -77,4 +77,12 @@ tests =
                     result = lagrangeInterpolate points x
                 in
                 Expect.equal result 0
+        , test "Lagrange interpolation with zero points" <|
+            \_ ->
+                let
+                    points = []
+                    x = 2
+                    result = lagrangeInterpolate points x
+                in
+                Expect.equal result 0
         ]
