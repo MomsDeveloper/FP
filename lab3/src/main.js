@@ -5257,6 +5257,16 @@ var $author$project$Main$canvas = _Platform_outgoingPort(
 					})(b)
 				]));
 	});
+var $elm$core$Basics$ge = _Utils_ge;
+var $author$project$Main$checkPoint = F2(
+	function (point, points) {
+		if (!points.b) {
+			return false;
+		} else {
+			var p = points.a;
+			return _Utils_cmp(p.x, point) > -1;
+		}
+	});
 var $author$project$Main$clearCanvas = function (id) {
 	return $author$project$Main$canvas(
 		_Utils_Tuple2(
@@ -5721,7 +5731,7 @@ var $author$project$Main$update = F2(
 					return A2($elm$core$Tuple$pair, model, $elm$core$Platform$Cmd$none);
 				}
 			case 'AddPoint':
-				var newPoints = A2($elm$core$List$cons, inputPoint, model.points);
+				var newPoints = A2($author$project$Main$checkPoint, inputPoint.x, model.points) ? model.points : A2($elm$core$List$cons, inputPoint, model.points);
 				var _v3 = model.interpolationType;
 				switch (_v3.$) {
 					case 'Linear':

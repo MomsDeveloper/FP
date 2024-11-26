@@ -1,8 +1,8 @@
-port module Main exposing (..)
+port module Main exposing (main)
 
 import Browser
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, button, div, input, li, option, p, select, ul)
+import Html.Attributes exposing (height, id, placeholder, style, type_, value, width)
 import Html.Events exposing (onClick, onInput)
 import Interpolation exposing (lagrangeInterpolate, linearInterpolate)
 
@@ -181,7 +181,11 @@ update msg model =
         AddPoint ->
             let
                 newPoints =
-                    inputPoint :: model.points
+                    if checkPoint inputPoint.x model.points then
+                        model.points
+
+                    else
+                        inputPoint :: model.points
             in
             case model.interpolationType of
                 Linear ->
@@ -277,6 +281,16 @@ update msg model =
 
             else
                 Tuple.pair model Cmd.none
+
+
+checkPoint : Float -> List Point -> Bool
+checkPoint point points =
+    case points of
+        [] ->
+            False
+
+        p :: _ ->
+            p.x >= point
 
 
 getNextLinearInterpolatedPointToDraw : Float -> Float -> List Point -> Maybe Point
@@ -426,9 +440,7 @@ range start end step =
 view : Model -> Html Msg
 view model =
     div []
-        [
-        -- p [] [ Html.text <| "previousLinearPoint: " ++ (viewFloat model.previousLinearPoint.x) ++ ", " ++ (viewFloat model.previousLinearPoint.y) ]
-        p[] [Html.canvas [ id "plot", width canvasSize, height canvasSize, style "border" "1px solid black" ] []]
+        [ p [] [ Html.canvas [ id "plot", width canvasSize, height canvasSize, style "border" "1px solid black" ] [] ]
         , input [ type_ "number", placeholder "X", onInput InputX ] []
         , input [ type_ "number", placeholder "Y", onInput InputY ] []
         , button [ onClick AddPoint ] [ Html.text "Add Point" ]
@@ -454,10 +466,6 @@ view model =
             Err error ->
                 li [ style "color" "red" ] [ Html.text error ]
         ]
-
-
-
--- with 2 decimal places
 
 
 viewFloat : Float -> String

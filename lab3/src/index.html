@@ -25,10 +25,6 @@
         const delta = timestamp - previousTimestamp;
         previousTimestamp = timestamp;
 
-        // for (let i = 0; i < 100000; i++) {
-        //   console.log("busy");
-        // }
-
         app.ports.draw.send(delta);
 
         window.requestAnimationFrame(next);
@@ -63,7 +59,6 @@
         // Ты видишь меня? Я тоже тебя вижу. Давай смотреть друг на друга до тех пор, пока наши глаза не устанут. 
         // Ты не хочешь? Почему? Что-то не так?
         for (const { action, args } of actions) {
-          console.log(action, args);
           ctx[action](...args);
         }
       });
