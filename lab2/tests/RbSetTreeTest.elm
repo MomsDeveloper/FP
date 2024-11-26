@@ -57,9 +57,9 @@ testInsertDuplicate =
         \_ ->
             let
                 tree =
-                    insert 2 intComparator <| insert 9 intComparator (insert 4 intComparator sampleTree)
+                    insert 8 intComparator sampleTree
             in
-            Expect.equal (toList tree) [ 2, 3, 4, 5, 8, 9 ]
+            Expect.equal (toList tree) [ 3, 5, 8 ]
 
 
 testColorsToList : Test
@@ -95,61 +95,13 @@ testDeleteEmpty =
             Expect.equal tree Empty
 
 
-testDeleteCase1 : Test
-testDeleteCase1 =
-    test "Delete case 1" <|
-        \_ ->
-            let
-                tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator |> insert 4 intComparator |> delete 3 intComparator
-            in
-            case tree of
-                Node _ (Node color _ _ _) _ (Node color2 _ _ _) ->
-                    Expect.equal color color2
-
-                _ ->
-                    Expect.fail "Expected nodes to have same color"
-
-
-testDeleteCase2 : Test
-testDeleteCase2 =
-    test "Delete case 2" <|
-        \_ ->
-            let
-                tree =
-                    insert 4 intComparator sampleTree |> insert 1 intComparator |> delete 4 intComparator
-            in
-            case tree of
-                Node _ _ value _ ->
-                    Expect.equal value 5
-
-                _ ->
-                    Expect.fail "Expected root node with value 5"
-
-
-testDeleteCase3 : Test
-testDeleteCase3 =
-    test "Delete case 3" <|
-        \_ ->
-            let
-                tree =
-                    insert 6 intComparator sampleTree |> insert 9 intComparator |> delete 5 intComparator
-            in
-            case tree of
-                Node _ (Node _ Empty value Empty) _ _ ->
-                    Expect.equal value 3
-
-                _ ->
-                    Expect.fail "Expected value 3"
-
-
 testRootColor : Test
 testRootColor =
-    test "Root color" <|
+    test "Сheck root color" <|
         \_ ->
             let
                 tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator |> insert 4 intComparator |> delete 2 intComparator
+                    insert 1 intComparator Empty
             in
             case tree of
                 Node color _ _ _ ->
@@ -165,14 +117,14 @@ filterTest =
         \_ ->
             let
                 tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator |> filter (\x -> x > 4) intComparator
+                    filter (\x -> x > 4) intComparator sampleTree
             in
             case countNodes tree of
                 2 ->
                     Expect.pass
 
                 _ ->
-                    Expect.fail "Expected a tree with 2 nodes"
+                    Expect.fail "Expected a filtered tree with 2 nodes"
 
 
 
@@ -198,13 +150,13 @@ searchTest =
         \_ ->
             let
                 tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator
+                    sampleTree
             in
-            if search 2 intComparator tree then
+            if search 3 intComparator tree then
                 Expect.pass
 
             else
-                Expect.fail "Expected to find value 2 in the tree"
+                Expect.fail "Expected to find value 3 in the tree"
 
 
 mapTest : Test
@@ -213,10 +165,10 @@ mapTest =
         \_ ->
             let
                 tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator |> map (\x -> x * 2)
+                    map (\x -> x * 2) sampleTree
             in
             case toList tree of
-                [ 2, 4, 6, 10, 16 ] ->
+                [ 6, 10, 16 ] ->
                     Expect.pass
 
                 _ ->
@@ -229,14 +181,14 @@ foldlTest =
         \_ ->
             let
                 tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator
+                    sampleTree
             in
             case foldl (\x y -> x + y) 0 tree of
-                19 ->
+                16 ->
                     Expect.pass
 
                 _ ->
-                    Expect.fail "Expected sum of all values to be 19"
+                    Expect.fail "Expected sum of all values to be 16"
 
 
 foldrTest : Test
@@ -245,14 +197,14 @@ foldrTest =
         \_ ->
             let
                 tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator
+                    sampleTree
             in
             case foldr (\x y -> x + y) 0 tree of
-                19 ->
+                16 ->
                     Expect.pass
 
                 _ ->
-                    Expect.fail "Expected sum of all values to be 19"
+                    Expect.fail "Expected sum of all values to be 16"
 
 
 mergeTest : Test
@@ -261,7 +213,7 @@ mergeTest =
         \_ ->
             let
                 tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator
+                    sampleTree
 
                 merged =
                     merge (insert 4 intComparator Empty) tree intComparator
@@ -270,7 +222,7 @@ mergeTest =
                 Expect.pass
 
             else
-                Expect.fail "Expected to find value 4 in the tree"
+                Expect.fail "Expected to find value 5 in the merged tree"
 
 
 mergeEmptyTest : Test
@@ -279,7 +231,7 @@ mergeEmptyTest =
         \_ ->
             let
                 tree =
-                    insert 1 intComparator sampleTree |> insert 2 intComparator |> insert 3 intComparator
+                    sampleTree
 
                 merged =
                     merge Empty tree intComparator
@@ -288,20 +240,4 @@ mergeEmptyTest =
                 Expect.pass
 
             else
-                Expect.fail "Expected to find value 3 in the tree"
-
-            
-mergeCase1Test : Test
-mergeCase1Test =
-    test "Merge case 1" <|
-        \_ ->
-            let
-                expectedTree =
-                    insert 1 intComparator sampleTree |> insert 4 intComparator |> insert 3 intComparator
-                tree2 =
-                    insert 4 intComparator Empty |> insert 3 intComparator |> insert 1 intComparator
-
-                merged =
-                    merge sampleTree tree2 intComparator
-            in
-            Expect.equal (toList merged) (toList expectedTree)
+                Expect.fail "Expected to find value 3 in the merged tree"

@@ -67,7 +67,18 @@ testInsertMultiple =
                         |> insert { name = "Ben", age = 30 } personComparator
                         |> insert { name = "Eve", age = 25 } personComparator
             in
-            Expect.equal (toList tree) [ { age = 20, name = "Charlie" }, { age = 20, name = "George" }, { age = 25, name = "Alice" }, { age = 25, name = "Eve" }, { age = 30, name = "Ben" }, { age = 30, name = "Bob" }, { age = 30, name = "Frank" }, { age = 35, name = "Denise" }, { age = 35, name = "Helen" } ]
+            Expect.equal
+                (toList tree)
+                [ { age = 20, name = "Charlie" }
+                , { age = 20, name = "George" }
+                , { age = 25, name = "Alice" }
+                , { age = 25, name = "Eve" }
+                , { age = 30, name = "Ben" }
+                , { age = 30, name = "Bob" }
+                , { age = 30, name = "Frank" }
+                , { age = 35, name = "Denise" }
+                , { age = 35, name = "Helen" }
+                ]
 
 
 testInsertDuplicate : Test
@@ -78,7 +89,17 @@ testInsertDuplicate =
                 tree =
                     insert { name = "Alice", age = 25 } personComparator personTree
             in
-            Expect.equal (toList tree) [ { age = 20, name = "Charlie" }, { age = 20, name = "George" }, { age = 25, name = "Alice" }, { age = 25, name = "Eve" }, { age = 30, name = "Bob" }, { age = 30, name = "Frank" }, { age = 35, name = "Denise" }, { age = 35, name = "Helen" } ]
+            Expect.equal
+                (toList tree)
+                [ { age = 20, name = "Charlie" }
+                , { age = 20, name = "George" }
+                , { age = 25, name = "Alice" }
+                , { age = 25, name = "Eve" }
+                , { age = 30, name = "Bob" }
+                , { age = 30, name = "Frank" }
+                , { age = 35, name = "Denise" }
+                , { age = 35, name = "Helen" }
+                ]
 
 
 testDelete : Test
@@ -89,8 +110,16 @@ testDelete =
                 tree =
                     delete { name = "Alice", age = 25 } personComparator personTree
             in
-            Expect.equal (toList tree) [ { age = 20, name = "Charlie" }, { age = 20, name = "George" }, { age = 25, name = "Eve" }, { age = 30, name = "Bob" }, { age = 30, name = "Frank" }, { age = 35, name = "Denise" }, { age = 35, name = "Helen" } ]
-
+            Expect.equal
+                (toList tree)
+                [ { age = 20, name = "Charlie" }
+                , { age = 20, name = "George" }
+                , { age = 25, name = "Eve" }
+                , { age = 30, name = "Bob" }
+                , { age = 30, name = "Frank" }
+                , { age = 35, name = "Denise" }
+                , { age = 35, name = "Helen" }
+                ]
 
 testDeleteEmpty : Test
 testDeleteEmpty =
@@ -127,8 +156,17 @@ mapTest =
                 mappedTree =
                     map (\person -> { person | age = person.age + 1 }) personTree
             in
-            Expect.equal (toList mappedTree) [ { age = 21, name = "Charlie" }, { age = 21, name = "George" }, { age = 26, name = "Alice" }, { age = 26, name = "Eve" }, { age = 31, name = "Bob" }, { age = 31, name = "Frank" }, { age = 36, name = "Denise" }, { age = 36, name = "Helen" } ]
-
+            Expect.equal
+                (toList mappedTree)
+                [ { age = 21, name = "Charlie" }
+                , { age = 21, name = "George" }
+                , { age = 26, name = "Alice" }
+                , { age = 26, name = "Eve" }
+                , { age = 31, name = "Bob" }
+                , { age = 31, name = "Frank" }
+                , { age = 36, name = "Denise" }
+                , { age = 36, name = "Helen" }
+                ]
 
 searchTest : Test
 searchTest =
@@ -169,19 +207,26 @@ mergeTest =
         \_ ->
             let
                 tree1 =
-                    insert { name = "Alice", age = 25 } personComparator Empty
-                        |> insert { name = "Bob", age = 30 } personComparator
-                        |> insert { name = "Charlie", age = 20 } personComparator
-                        |> insert { name = "Frank", age = 30 } personComparator
-            in
-            let
+                    personTree
+            
                 tree2 =
                     insert { name = "Denise", age = 35 } personComparator Empty
                         |> insert { name = "Eve", age = 25 } personComparator
-                        |> insert { name = "Frank", age = 30 } personComparator
-            in
-            let
+                        |> insert { name = "Frank", age = 35 } personComparator
+            
+            
                 mergedTree =
                     merge tree1 tree2 personComparator
             in
-            Expect.equal (toList mergedTree) [ { age = 20, name = "Charlie" }, { age = 25, name = "Alice" }, { age = 25, name = "Eve" }, { age = 30, name = "Bob" }, { age = 30, name = "Frank" }, { age = 35, name = "Denise" } ]
+            Expect.equal
+                (toList mergedTree)
+                [ { age = 20, name = "Charlie" }
+                , { age = 20, name = "George" }
+                , { age = 25, name = "Alice" }
+                , { age = 25, name = "Eve" }
+                , { age = 30, name = "Bob" }
+                , { age = 30, name = "Frank" }
+                , { age = 35, name = "Denise" }
+                , { age = 35, name = "Frank" }
+                , { age = 35, name = "Helen" }
+                ]
